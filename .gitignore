@@ -1,0 +1,6 @@
+.venv/
+bin/
+uv-cache/
+module.tar.gz
+__pycache__/
+.pytest_cache/

@@ -1,0 +1,10 @@
+# Pinned together: openvino, openvino-genai and openvino-tokenizers must share a release.
+viam-sdk==0.84.0
+openvino==2026.4.1
+openvino-genai==2026.4.1.0
+openvino-tokenizers==2026.4.1.0
+numpy==2.5.4
+pillow==12.3.0
+soundfile==0.14.0
+soxr==1.1.0
+typing_extensions==4.16.0

@@ -1,0 +1,35 @@
+{
+  "$schema": "https://dl.viam.dev/module.schema.json",
+  "module_id": "viam:openvino-genai",
+  "visibility": "public",
+  "url": "",
+  "description": "Generative AI on Intel CPU, GPU and NPU with OpenVINO GenAI: Whisper speech-to-text, vision-language models (Qwen2.5-VL and others) and local LLMs.",
+  "markdown_link": "README.md",
+  "entrypoint": "run.sh",
+  "first_run": "first_run.sh",
+  "models": [
+    {
+      "api": "rdk:service:generic",
+      "model": "viam:openvino-genai:speech-to-text",
+      "markdown_link": "README.md#viamopenvino-genaispeech-to-text",
+      "short_description": "Whisper speech-to-text: transcribe audio files or stream from an audio_in mic."
+    },
+    {
+      "api": "rdk:service:vision",
+      "model": "viam:openvino-genai:vlm",
+      "markdown_link": "README.md#viamopenvino-genaivlm",
+      "short_description": "Ask a vision-language model about a camera's view; captions as classifications."
+    },
+    {
+      "api": "rdk:service:generic",
+      "model": "viam:openvino-genai:llm",
+      "markdown_link": "README.md#viamopenvino-genaillm",
+      "short_description": "Local LLM text generation with optional multi-turn sessions."
+    }
+  ],
+  "build": {
+    "build": "./build.sh",
+    "path": "module.tar.gz",
+    "arch": ["linux/amd64"]
+  }
+}
