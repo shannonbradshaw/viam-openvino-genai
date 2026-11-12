@@ -2,7 +2,7 @@
   "$schema": "https://dl.viam.dev/module.schema.json",
   "module_id": "viam:openvino-genai",
   "visibility": "public",
-  "url": "",
+  "url": "https://github.com/shannonbradshaw/viam-openvino-genai",
   "description": "Generative AI on Intel CPU, GPU and NPU with OpenVINO GenAI: Whisper speech-to-text, vision-language models (Qwen2.5-VL and others) and local LLMs.",
   "markdown_link": "README.md",
   "entrypoint": "run.sh",
