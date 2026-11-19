@@ -36,10 +36,12 @@ def available_devices() -> list:
 class PipelineLoader:
     """Owns one pipeline. ``factory(model_path, device, **properties)`` builds it, e.g. openvino_genai.LLMPipeline."""
 
-    def __init__(self, name: str, cfg: PipelineConfig, factory: Callable[..., Any]) -> None:
+    def __init__(self, name: str, cfg: PipelineConfig, factory: Callable[..., Any], warmup: Optional[Callable[[Any], Any]] = None) -> None:
         self.name = name
         self.cfg = cfg
         self._factory = factory
+        self._warmup = warmup if cfg.warmup else None
+        self.warmup_seconds: Optional[float] = None
         self._lock = threading.Lock()  # GenAI pipelines are not safe for concurrent generate calls
         self._pipeline: Any = None
         self.state = LOADING
@@ -81,6 +83,7 @@ class PipelineLoader:
                 if i + 1 < len(devices):
                     LOGGER.warning(f"{self.name}: could not load on {dev}, falling back to {devices[i + 1]}: {e}")
                 continue
+            self._run_warmup(pipe)
             with self._lock:
                 if self.state == CLOSED:
                     return
@@ -88,6 +91,20 @@ class PipelineLoader:
             LOGGER.info(f"{self.name}: ready on {dev} after {self.load_seconds}s")
             return
         self._fail(last_err)
+
+    def _run_warmup(self, pipe: Any) -> None:
+        """The first generate on a freshly compiled pipeline pays one-time costs (about 1.5 s extra TTFT for a 4B VLM on
+        an Arc iGPU). Pay them here, while the state is still ``loading``, instead of on the first real request."""
+        if self._warmup is None:
+            return
+        t0 = time.perf_counter()
+        try:
+            self._warmup(pipe)
+        except Exception as e:  # noqa: BLE001 - a failed warmup must not keep a working model from serving
+            LOGGER.warning(f"{self.name}: warmup failed, continuing without it: {e}")
+            return
+        self.warmup_seconds = round(time.perf_counter() - t0, 2)
+        LOGGER.info(f"{self.name}: warmed up in {self.warmup_seconds}s")
 
     def _fail(self, msg: str) -> None:
         self.state, self.error = ERROR, msg
@@ -109,6 +126,7 @@ class PipelineLoader:
             "requested_device": self.cfg.device,
             "device": self.device or "",
             "load_seconds": self.load_seconds if self.load_seconds is not None else -1,
+            "warmup_seconds": self.warmup_seconds if self.warmup_seconds is not None else -1,
             "error": self.error or "",
         }
 

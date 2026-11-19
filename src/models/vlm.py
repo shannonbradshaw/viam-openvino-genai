@@ -93,12 +93,24 @@ class OpenVINOVLM(Vision, EasyResource):
         if old is None or old.cfg != cfg.pipeline:
             import openvino_genai as ov_genai
 
-            self.loader = PipelineLoader(self.name, cfg.pipeline, ov_genai.VLMPipeline).start()
+            self.loader = PipelineLoader(self.name, cfg.pipeline, ov_genai.VLMPipeline, self._warmup_fn(cfg)).start()
             if old is not None:
                 old.close()
         self.cfg = cfg
         by_name = {rn.name: res for rn, res in dependencies.items()}
         self.cameras = {n: by_name[n] for n in cfg.cameras if n in by_name}  # type: ignore[misc]
+
+    @staticmethod
+    def _warmup_fn(cfg: VLMConfig):
+        # A 640x480 frame, downscaled like a real one, so the vision encoder runs at a typical camera's shape.
+        tensor = _pil_to_tensor(Image.new("RGB", (640, 480), (128, 128, 128)), cfg.max_image_size)
+
+        def warmup(pipe):
+            gc = pipe.get_generation_config()
+            gc.max_new_tokens = 1
+            pipe.generate(cfg.prompt, images=[tensor], generation_config=gc)
+
+        return warmup
 
     # -- core ----------------------------------------------------------------------------------------------------
 

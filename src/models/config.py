@@ -96,6 +96,7 @@ class PipelineConfig:
     fallback_device: Optional[str] = DEFAULT_FALLBACK_DEVICE
     cache_dir: Optional[str] = None
     extra_config: Dict[str, Any] = field(default_factory=dict)
+    warmup: bool = True
 
     @classmethod
     def from_attributes(cls, attrs: Mapping[str, Any]) -> "PipelineConfig":
@@ -108,6 +109,9 @@ class PipelineConfig:
         cache_dir = attrs.get("cache_dir")
         if cache_dir is not None and not isinstance(cache_dir, str):
             raise ValueError("cache_dir must be a string ('' disables the compiled-model cache)")
+        warmup = attrs.get("warmup", True)
+        if not isinstance(warmup, bool):
+            raise ValueError("warmup must be a boolean")
         device = _device(attrs, "device", DEFAULT_DEVICE)
         fallback = _device(attrs, "fallback_device", DEFAULT_FALLBACK_DEVICE)
         return cls(
@@ -116,6 +120,7 @@ class PipelineConfig:
             fallback_device=None if fallback == device else fallback,
             cache_dir=cache_dir,
             extra_config=dict(extra),
+            warmup=warmup,
         )
 
 

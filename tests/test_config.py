@@ -66,3 +66,10 @@ def test_speech_target_requires_mic():
 def test_llm_history_bounds():
     with pytest.raises(ValueError, match="max_history_messages"):
         LLMConfig({"model_path": "/m", "max_history_messages": 1})
+
+
+def test_warmup_defaults_on_and_must_be_bool():
+    assert PipelineConfig.from_attributes({"model_path": "m"}).warmup is True
+    assert PipelineConfig.from_attributes({"model_path": "m", "warmup": False}).warmup is False
+    with pytest.raises(ValueError, match="warmup"):
+        PipelineConfig.from_attributes({"model_path": "m", "warmup": "yes"})

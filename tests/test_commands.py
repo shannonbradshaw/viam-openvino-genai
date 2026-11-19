@@ -175,3 +175,23 @@ async def test_stt_mic_segments_delivered(fake_genai):
     status = await stt.do_command({"command": "status"})
     assert status["segments"] == 2 and status["listening"] is True
     await stt.close()
+
+
+async def test_warmup_runs_before_ready_and_can_be_disabled(fake_genai):
+    vlm = OpenVINOVLM.new(make_config("vlm", {"model_path": fake_genai.model_path}), {})
+    wait_ready(vlm.loader)
+    (inputs, _, kwargs), = vlm.loader._pipeline.calls
+    assert kwargs["images"] and kwargs["generation_config"].max_new_tokens == 1
+    assert vlm.loader.status()["warmup_seconds"] >= 0
+
+    off = OpenVINOLLM.new(make_config("llm", {"model_path": fake_genai.model_path, "warmup": False}), {})
+    wait_ready(off.loader)
+    assert off.loader._pipeline.calls == [] and off.loader.status()["warmup_seconds"] == -1
+
+
+async def test_failed_warmup_still_serves(fake_genai):
+    def boom(pipe):
+        raise RuntimeError("no")
+
+    loader = PipelineLoader("x", PipelineConfig.from_attributes({"model_path": fake_genai.model_path}), fake_genai.cls, boom).start()
+    assert wait_ready(loader) == "ready" and loader.status()["warmup_seconds"] == -1

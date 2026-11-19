@@ -59,6 +59,10 @@ class SpeechConfig:
         return [n for n in (self.mic, self.transcript_target) if n]
 
 
+def _warmup(pipe) -> None:
+    pipe.generate([0.0] * 16000, pipe.get_generation_config())  # one second of silence at 16 kHz
+
+
 class OpenVINOSpeechToText(Generic, EasyResource):
     MODEL: ClassVar[Model] = Model.from_string("viam:openvino-genai:speech-to-text")
 
@@ -90,7 +94,7 @@ class OpenVINOSpeechToText(Generic, EasyResource):
         if old is None or old.cfg != cfg.pipeline:
             import openvino_genai as ov_genai
 
-            self.loader = PipelineLoader(self.name, cfg.pipeline, ov_genai.WhisperPipeline).start()
+            self.loader = PipelineLoader(self.name, cfg.pipeline, ov_genai.WhisperPipeline, _warmup).start()
             if old is not None:
                 old.close()
         self.cfg = cfg

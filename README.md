@@ -37,13 +37,15 @@ To ship a model with a machine's config, upload the folder as a Viam ML model pa
 | `fallback_device` | string | `"CPU"` | Used if `device` fails to load; logged as a warning. `""` disables fallback. |
 | `cache_dir` | string | `$VIAM_MODULE_DATA/ov_cache` | Compiled-model cache; makes later starts faster. `""` disables. |
 | `extra_config` | object | `{}` | Extra OpenVINO properties passed to the pipeline. |
+| `warmup` | bool | `true` | After compiling, run one throwaway one-token generation (a gray 640x480 frame for `vlm`, "Hello" for `llm`, 1 s of silence for `speech-to-text`) before reporting `ready`, so the first real request doesn't pay the one-time startup cost. |
 
 The GPU is the default because it was the fastest device for every generative model we measured, and the NPU compiles large
 generative models very slowly (a 3B VLM did not finish compiling in 20 minutes on a Core Ultra X7 358H).
 
 Models are compiled in a background thread so a slow compile does not hit viam-server's resource-construction timeout.
 Until loading finishes, requests fail with "model is still loading"; `{"command": "status"}` reports `state`
-(`loading`, `ready`, `error`), the device actually used, and the load time.
+(`loading`, `ready`, `error`), the device actually used, the load time and the warmup time (`warmup_seconds`, `-1` if
+skipped or failed; a failed warmup is logged as a warning and the model still serves).
 
 Generation knobs, settable as attributes (defaults) and per request (overrides): `max_new_tokens`, `temperature`, `top_p`,
 `top_k`, `do_sample`, `repetition_penalty`.
