@@ -184,7 +184,7 @@ async def test_warmup_runs_before_ready_and_can_be_disabled(fake_genai):
     assert kwargs["images"] and kwargs["generation_config"].max_new_tokens == 1
     assert vlm.loader.status()["warmup_seconds"] >= 0
 
-    off = OpenVINOLLM.new(make_config("llm", {"model_path": fake_genai.model_path, "warmup": False}), {})
+    off = OpenVINOVLM.new(make_config("vlm", {"model_path": fake_genai.model_path, "warmup": False}), {})
     wait_ready(off.loader)
     assert off.loader._pipeline.calls == [] and off.loader.status()["warmup_seconds"] == -1
 

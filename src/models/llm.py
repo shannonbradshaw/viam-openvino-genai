@@ -29,12 +29,6 @@ LOGGER = getLogger(__name__)
 DEFAULT_GENERATION = {"max_new_tokens": 256, "repetition_penalty": 1.1}
 
 
-def _warmup(pipe) -> None:
-    gc = pipe.get_generation_config()
-    gc.max_new_tokens = 1
-    pipe.generate("Hello", generation_config=gc)
-
-
 class LLMConfig:
     def __init__(self, attrs: Mapping[str, Any]) -> None:
         self.pipeline = PipelineConfig.from_attributes(attrs)
@@ -69,7 +63,7 @@ class OpenVINOLLM(Generic, EasyResource):
         if old is None or old.cfg != cfg.pipeline:
             import openvino_genai as ov_genai
 
-            self.loader = PipelineLoader(self.name, cfg.pipeline, ov_genai.LLMPipeline, _warmup).start()
+            self.loader = PipelineLoader(self.name, cfg.pipeline, ov_genai.LLMPipeline).start()
             if old is not None:
                 old.close()
             self.sessions.clear()

@@ -37,7 +37,7 @@ To ship a model with a machine's config, upload the folder as a Viam ML model pa
 | `fallback_device` | string | `"CPU"` | Used if `device` fails to load; logged as a warning. `""` disables fallback. |
 | `cache_dir` | string | `$VIAM_MODULE_DATA/ov_cache` | Compiled-model cache; makes later starts faster. `""` disables. |
 | `extra_config` | object | `{}` | Extra OpenVINO properties passed to the pipeline. |
-| `warmup` | bool | `true` | After compiling, run one throwaway one-token generation (a gray 640x480 frame for `vlm`, "Hello" for `llm`, 1 s of silence for `speech-to-text`) before reporting `ready`, so the first real request doesn't pay the one-time startup cost. |
+| `warmup` | bool | `true` | After compiling, run one throwaway generation (a gray 640x480 frame for `vlm`, 1 s of silence for `speech-to-text`) before reporting `ready`, so the first real request doesn't pay the one-time startup cost. `llm` ignores it: its first-request penalty measured ~50-70 ms and a warmup didn't reduce it. |
 
 The GPU is the default because it was the fastest device for every generative model we measured, and the NPU compiles large
 generative models very slowly (a 3B VLM did not finish compiling in 20 minutes on a Core Ultra X7 358H).
